@@ -25,7 +25,7 @@ class tekscope:
         print(self.get_vert_offset(2))
 
         self.set_data_start(1)
-        self.set_data_stop(100000)
+        self.set_data_stop(1.25e6)
         self.save_trace(2)
     
     def __enter__(self):
@@ -228,8 +228,9 @@ class tekscope:
             num_digits = int(raw_data[1:2])
             num_bytes = int(raw_data[2:2+num_digits])
             data = raw_data[2+num_digits: 2+num_digits+num_bytes]
-            data = np.frombuffer(data, dtype = self.data_type) - self.mid_level
-            data = data
+            data = np.frombuffer(data, dtype = self.data_type)
+            ## this has to be on another line, if not it will cause unsigned overflow error
+            data -= self.mid_level
             ans = data
 
         plt.plot(ans)
@@ -259,11 +260,10 @@ class tekscope:
         ans = self.client.query(f"WFMOutpre:BYT_Nr?")
         self.data_byte_depth = int(ans)
         if self.data_byte_depth == 1:
-            self.data_type = np.uint8
+            self.data_type = np.int8
             self.mid_level = 128
         elif self.data_byte_depth == 2:
-            print('hihi')
-            self.data_type = np.uint16
+            self.data_type = np.int16
             self.mid_level = 32768
         return ans
 
